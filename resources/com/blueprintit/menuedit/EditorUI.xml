@@ -1,0 +1,53 @@
+<!--
+	$HeadURL$
+	$LastChangedBy$
+	$Date$
+	$Revision$
+-->
+
+<applet layout="GridBagLayout">
+	<scrollpane constraints="BorderLayout.CENTER">
+		<gridbagconstraints gridx="0" gridy="0" gridheight="2" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>
+		<tree id="tree"/>
+	</scrollpane>
+	<panel layout="GridBagLayout" constraints="BorderLayout.EAST">
+		<gridbagconstraints gridx="1" gridy="0" weightx="1" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
+		<button id="btnAdd" enabled="false" action="menuAddAction">
+			<gridbagconstraints gridx="0" gridy="0" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
+		</button>
+		<button id="btnDel" enabled="false" action="menuDeleteAction">
+			<gridbagconstraints gridx="0" gridy="1" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
+		</button>
+		<button id="btnUp" enabled="false" action="menuMoveUpAction">
+			<gridbagconstraints gridx="0" gridy="2" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
+		</button>
+		<button id="btnDown" enabled="false" action="menuMoveDownAction">
+			<gridbagconstraints gridx="0" gridy="3" weighty="1" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
+		</button>
+	</panel>
+	<panel layout="GridBagLayout">
+		<gridbagconstraints gridx="1" gridy="1" weightx="1" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
+		<buttongroup>
+			<radiobutton action="radioNoLinkAction" enabled="false" id="radioNoLink" text="Do not link">
+				<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="1" gridwidth="1" anchor="GridBagConstraints.FIRST_LINE_START"/>
+			</radiobutton>
+			<radiobutton action="radioInternalAction" enabled="false" id="radioInternal" text="Link to internal page">
+				<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="2" gridwidth="1" anchor="GridBagConstraints.FIRST_LINE_START"/>
+			</radiobutton>
+			<button action="browseInternalAction" enabled="false" id="btnInternal" text="Browse...">
+				<gridbagconstraints insets="2,2,2,2" gridx="1" gridy="2" anchor="GridBagConstraints.FIRST_LINE_END"/>
+			</button>
+			<radiobutton action="radioExternalAction" enabled="false" id="radioExternal" text="Link to external website">
+				<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="3" weighty="1" gridwidth="1" anchor="GridBagConstraints.FIRST_LINE_START"/>
+			</radiobutton>
+			<textfield enabled="false" id="textExternal">
+				<gridbagconstraints insets="2,2,2,2" gridx="1" gridy="3" weightx="1" fill="GridBagConstraints.HORIZONTAL" anchor="GridBagConstraints.FIRST_LINE_START"/>
+			</textfield>
+		</buttongroup>
+	</panel>
+	<panel>
+		<gridbagconstraints gridx="0" gridy="2" gridwidth="3" fill="GridBagConstraints.HORIZONTAL"/>
+		<button action="saveAction"/>
+		<button action="cancelAction"/>
+	</panel>
+</applet>
