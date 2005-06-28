@@ -25,6 +25,10 @@ public class MenuEdit extends JApplet
 	static
 	{
 		BasicConfigurator.configure();
+	}
+	
+	public void init()
+	{
 		try
 		{
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -32,10 +36,6 @@ public class MenuEdit extends JApplet
 		catch (Exception e)
 		{
 		}
-	}
-	
-	public void init()
-	{
 		try
 		{
 			String urlbase="http://localhost"+getParameter("swim.base");

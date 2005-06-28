@@ -23,6 +23,7 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.Writer;
 import java.net.URL;
 import java.util.Enumeration;
@@ -70,6 +71,7 @@ public class EditorUI implements InterfaceListener
 		private String text = "Root";
 		private String url;
 		private String resource;
+		private String orientation = "vertical";
 		private boolean useURL=true;
 		private boolean hasLink=false;
 		
@@ -117,6 +119,10 @@ public class EditorUI implements InterfaceListener
 		
 		private void processMenuElement(Element element)
 		{
+			if (element.hasAttribute("orientation"))
+			{
+				orientation=element.getAttribute("orientation");
+			}
 			Node node = element.getFirstChild();
 			while (node!=null)
 			{
@@ -156,6 +162,7 @@ public class EditorUI implements InterfaceListener
 		public Element getMenuElement(Document doc)
 		{
 			Element el = doc.createElement("menu");
+			el.setAttribute("orientation",orientation);
 			Iterator it = subitems.iterator();
 			while (it.hasNext())
 			{
@@ -454,6 +461,8 @@ public class EditorUI implements InterfaceListener
 			  transformer.transform(source, result);
 			  
 				writer.close();
+				
+				context.showDocument(commitURL);
 			}
 			catch (Exception ex)
 			{
@@ -667,6 +676,13 @@ public class EditorUI implements InterfaceListener
 						btnInternal.setEnabled(false);
 					}
 					radioSelectionChanged();
+				}
+			});
+			textExternal.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e)
+				{
+					MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
+					item.setURL(textExternal.getText());
 				}
 			});
 		}
