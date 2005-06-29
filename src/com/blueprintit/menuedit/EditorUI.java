@@ -45,13 +45,10 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.log4j.Logger;
+import org.jdom.input.DOMBuilder;
+import org.jdom.output.XMLOutputter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -447,18 +444,15 @@ public class EditorUI implements InterfaceListener
 				Document list=builder.newDocument();
 				list.appendChild(root.getMenuElement(list));
 
-				TransformerFactory tFactory = TransformerFactory.newInstance();
-			  Transformer transformer = tFactory.newTransformer();
-
 				Request request = swim.getRequest(menu);
 				request.addParameter("version","temp");
 				Writer writer = request.openWriter();
 
-				DOMSource source = new DOMSource(list);
-			  StreamResult result = new StreamResult(writer);
-			  transformer.setOutputProperty(OutputKeys.INDENT,"yes");
-			  transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION,"yes");
-			  transformer.transform(source, result);
+				org.jdom.Document doc = (new DOMBuilder()).build(list);
+				XMLOutputter outputter = new XMLOutputter();
+				outputter.getFormat().setOmitEncoding(true);
+				outputter.getFormat().setOmitDeclaration(true);
+				outputter.output(doc,writer);
 			  
 				writer.close();
 				
