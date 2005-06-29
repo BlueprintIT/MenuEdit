@@ -38,13 +38,13 @@ public class MenuEdit extends JApplet
 		}
 		try
 		{
-			String urlbase="http://localhost"+getParameter("swim.base");
+			String urlbase=getParameter("swim.base");
 			SwimInterface swim = new SwimInterface(new URL(urlbase));
 			String path=getParameter("menu");
 			try
 			{
-				URL cancel = new URL("http://localhost"+getParameter("cancel"));
-				URL commit = new URL("http://localhost"+getParameter("commit"));
+				URL cancel = new URL(getParameter("cancel"));
+				URL commit = new URL(getParameter("commit"));
 				new UserInterface(new EditorUI(getAppletContext(),swim,path,cancel,commit),this);
 			}
 			catch (MalformedURLException e)
