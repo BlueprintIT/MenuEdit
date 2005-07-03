@@ -435,33 +435,44 @@ public class EditorUI implements InterfaceListener
 	public JButton btnInternal;
 	public JTextField textExternal;
 	
-	public Action saveAction = new AbstractAction("Save") {
+	private void saveWorking()
+	{
+		try
+		{
+			DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			Document list=builder.newDocument();
+			list.appendChild(root.getMenuElement(list));
+
+			Request request = swim.getRequest(menu);
+			request.addParameter("version","temp");
+			Writer writer = request.openWriter();
+
+			org.jdom.Document doc = (new DOMBuilder()).build(list);
+			XMLOutputter outputter = new XMLOutputter();
+			outputter.getFormat().setOmitEncoding(true);
+			outputter.getFormat().setOmitDeclaration(true);
+			outputter.output(doc,writer);
+		  
+			writer.close();
+		}
+		catch (Exception ex)
+		{
+			log.error("Unable to generate document",ex);
+		}
+	}
+	
+	public Action commitAction = new AbstractAction("Save & Commit") {
 		public void actionPerformed(ActionEvent e)
 		{
-			try
-			{
-				DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-				Document list=builder.newDocument();
-				list.appendChild(root.getMenuElement(list));
+			saveWorking();
+			context.showDocument(commitURL);
+		}
+	};
 
-				Request request = swim.getRequest(menu);
-				request.addParameter("version","temp");
-				Writer writer = request.openWriter();
-
-				org.jdom.Document doc = (new DOMBuilder()).build(list);
-				XMLOutputter outputter = new XMLOutputter();
-				outputter.getFormat().setOmitEncoding(true);
-				outputter.getFormat().setOmitDeclaration(true);
-				outputter.output(doc,writer);
-			  
-				writer.close();
-				
-				context.showDocument(commitURL);
-			}
-			catch (Exception ex)
-			{
-				log.error("Unable to generate document",ex);
-			}
+	public Action saveAction = new AbstractAction("Save Working Copy") {
+		public void actionPerformed(ActionEvent e)
+		{
+			saveWorking();
 		}
 	};
 
