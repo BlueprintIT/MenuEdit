@@ -33,6 +33,7 @@ import java.util.Vector;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.JTree;
@@ -425,6 +426,7 @@ public class EditorUI implements InterfaceListener
 	private MenuItem root;
 	
 	public JTree tree;
+	public JButton btnRename;
 	public JButton btnAdd;
 	public JButton btnDel;
 	public JButton btnUp;
@@ -480,6 +482,20 @@ public class EditorUI implements InterfaceListener
 		public void actionPerformed(ActionEvent e)
 		{
 			context.showDocument(cancelURL);
+		}
+	};
+
+	public Action menuRenameAction = new AbstractAction("Rename...") {
+		public void actionPerformed(ActionEvent e)
+		{
+			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
+			String text = JOptionPane.showInputDialog("Enter a name for this menu:",item.getText());
+			if (text!=null)
+			{
+				item.setText(text);
+				DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+				model.nodeChanged(item);
+			}
 		}
 	};
 
@@ -631,6 +647,7 @@ public class EditorUI implements InterfaceListener
 					TreePath path = e.getNewLeadSelectionPath();
 					boolean enabled=((path!=null)&&(path.getPathCount()>1));
 					btnAdd.setEnabled((path!=null)&&(path.getPathCount()>=1));
+					btnRename.setEnabled(enabled);
 					btnDel.setEnabled(enabled);
 					tree.setEditable(enabled);
 					
