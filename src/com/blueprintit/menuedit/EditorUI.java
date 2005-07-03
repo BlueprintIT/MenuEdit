@@ -436,6 +436,7 @@ public class EditorUI implements InterfaceListener
 	public JRadioButton radioExternal;
 	public JButton btnInternal;
 	public JTextField textExternal;
+	public JButton btnExternal;
 	
 	private void saveWorking()
 	{
@@ -558,10 +559,23 @@ public class EditorUI implements InterfaceListener
 		}
 	};
 
+	public Action changeExternalAction = new AbstractAction() {
+		public void actionPerformed(ActionEvent e)
+		{
+			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
+			String text = JOptionPane.showInputDialog("Enter a URL for this menu item:",item.getURL());
+			if (text!=null)
+			{
+				item.setURL(text);
+				textExternal.setText(text);
+			}
+		}
+	};
+
 	private void radioSelectionChanged()
 	{
 		btnInternal.setEnabled(radioInternal.isSelected()&&radioInternal.isEnabled());
-		textExternal.setEnabled(radioExternal.isSelected()&&radioExternal.isEnabled());
+		btnExternal.setEnabled(radioExternal.isSelected()&&radioExternal.isEnabled());
 	}
 	
 	public Action radioInternalAction = new AbstractAction() {
@@ -694,12 +708,13 @@ public class EditorUI implements InterfaceListener
 						radioInternal.setEnabled(false);
 						radioExternal.setEnabled(false);
 						radioNoLink.setEnabled(false);
-						textExternal.setEnabled(false);
+						btnExternal.setEnabled(false);
 						btnInternal.setEnabled(false);
 					}
 					radioSelectionChanged();
 				}
 			});
+			// TODO fix this
 			textExternal.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e)
 				{
