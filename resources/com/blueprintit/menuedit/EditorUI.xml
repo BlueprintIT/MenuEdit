@@ -6,8 +6,20 @@
 -->
 
 <applet layout="GridBagLayout">
-	<toolbar rollover="true" floatable="false">
+	<panel layout="GridBagLayout">
 		<gridbagconstraints gridx="0" gridy="0" gridwidth="2" fill="GridBagConstraints.HORIZONTAL"/>
+		<label font="Arial-BOLD-14" foreground="0000FF" icon="com/blueprintit/menuedit/icons/icon.gif" text="Menu Editor">
+			<gridbagconstraints gridx="0" gridy="0"/>
+		</label>
+		<panel layout="FlowLayout">
+			<gridbagconstraints gridx="1" gridy="0" weightx="1"/>
+			<label icon="com/blueprintit/menuedit/icons/swimlogo.gif"/>
+			<label text="by"/>
+			<label icon="com/blueprintit/menuedit/icons/bpitlogo.gif"/>
+		</panel>
+	</panel>
+	<toolbar rollover="true" floatable="false">
+		<gridbagconstraints gridx="0" gridy="1" gridwidth="2" fill="GridBagConstraints.HORIZONTAL"/>
 		<label>General</label>
 		<separator/>
 		<button action="cancelAction" focusable="false" toolTipText="Cancel editing and delete the working copy.">Cancel</button>
@@ -15,14 +27,14 @@
 		<button action="commitAction" focusable="false" toolTipText="Save the current edits and commit this as a new version.">Save &amp; Commit</button>
 	</toolbar>
 	<panel layout="BorderLayout">
-		<gridbagconstraints gridx="0" gridy="1" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>
+		<gridbagconstraints gridx="0" gridy="2" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>
 		<label text="Menu structure" constraints="BorderLayout.NORTH"/>
 		<scrollpane constraints="BorderLayout.CENTER">
 			<tree id="tree"/>
 		</scrollpane>
 	</panel>
 	<panel layout="GridBagLayout">
-		<gridbagconstraints gridx="1" gridy="1" gridheight="2" weightx="0" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.BOTH"/>
+		<gridbagconstraints gridx="1" gridy="2" gridheight="2" weightx="0" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.BOTH"/>
 		<label text="Modify structure">
 			<gridbagconstraints gridx="0" gridy="0" insets="2,2,2,2" anchor="GridBagConstraints.EAST"/>
 		</label>
@@ -43,7 +55,7 @@
 		</button>
 	</panel>
 	<panel layout="GridBagLayout">
-		<gridbagconstraints gridx="0" gridy="2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.BOTH"/>
+		<gridbagconstraints gridx="0" gridy="3" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.BOTH"/>
 		<label text="Menu item properties">
 			<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="0" anchor="GridBagConstraints.FIRST_LINE_START"/>
 		</label>
