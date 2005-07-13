@@ -54,6 +54,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import com.blueprintit.errors.ErrorReporter;
 import com.blueprintit.swim.PageBrowser;
 import com.blueprintit.swim.Request;
 import com.blueprintit.swim.SwimInterface;
@@ -461,6 +462,9 @@ public class EditorUI implements InterfaceListener
 		catch (Exception ex)
 		{
 			log.error("Unable to generate document",ex);
+			ErrorReporter.sendErrorReport(
+					"Unable to save","The file could not be saved, probably because the server is currently unavailable.",
+					"Swim","MenuEdit","Could not save",ex);
 		}
 	}
 	
@@ -726,6 +730,9 @@ public class EditorUI implements InterfaceListener
 		catch (Exception e)
 		{
 			log.error("Unable to load menu",e);
+			ErrorReporter.sendErrorReport(
+					"Error loading content","The menu to be edited could not be loaded. The server could be down or misconfigured.",
+					"Swim","MenuEdit","Could not load menu",e);
 		}
 	}
 }

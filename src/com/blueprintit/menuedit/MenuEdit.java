@@ -15,6 +15,7 @@ import javax.swing.UIManager;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
+import com.blueprintit.errors.ErrorReporter;
 import com.blueprintit.swim.SwimInterface;
 import com.blueprintit.xui.UserInterface;
 
@@ -39,22 +40,36 @@ public class MenuEdit extends JApplet
 		try
 		{
 			String urlbase=getParameter("swim.base");
-			SwimInterface swim = new SwimInterface(new URL(urlbase));
 			String path=getParameter("menu");
 			try
 			{
-				URL cancel = new URL(getParameter("cancel"));
-				URL commit = new URL(getParameter("commit"));
-				new UserInterface(new EditorUI(getAppletContext(),swim,path,cancel,commit),this);
+				SwimInterface swim = new SwimInterface(new URL(urlbase));
+				try
+				{
+					URL cancel = new URL(getParameter("cancel"));
+					URL commit = new URL(getParameter("commit"));
+					new UserInterface(new EditorUI(getAppletContext(),swim,path,cancel,commit),this);
+				}
+				catch (MalformedURLException e)
+				{
+					ErrorReporter.sendErrorReport(
+							"Invalid configuration","The website you are trying to edit appears to be misconfigured.",
+							"Swim","MenuEdit","Bad URLs",e);
+				}
 			}
-			catch (MalformedURLException e)
+			catch (Throwable e)
 			{
-				log.error("Could not construct urls",e);
+				log.error("Could not load UI",e);
+				ErrorReporter.sendErrorReport(
+						"Error loading editor","Due to an unknown reason, the menu editor could not be loaded.",
+						"Swim","MenuEdit","Could not load UI",e);
 			}
 		}
-		catch (Exception e)
+		catch (Throwable t)
 		{
-			log.error("Could not load UI",e);
+			ErrorReporter.sendErrorReport(
+					"Unknown Error","An unknown error has occured. You should send an error report to Blueprint IT Ltd.",
+					"Swim","MenuEdit","Unknown error",t);
 		}
 	}
 	
