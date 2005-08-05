@@ -439,7 +439,7 @@ public class EditorUI implements InterfaceListener
 	public JTextField textExternal;
 	public JButton btnExternal;
 	
-	private void saveWorking()
+	private boolean saveWorking()
 	{
 		try
 		{
@@ -458,21 +458,34 @@ public class EditorUI implements InterfaceListener
 			outputter.output(doc,writer);
 		  
 			writer.close();
+			return true;
 		}
 		catch (Exception ex)
 		{
-			log.error("Unable to generate document",ex);
-			ErrorReporter.sendErrorReport(
-					"Unable to save","The file could not be saved, probably because the server is currently unavailable.",
-					"Swim","MenuEdit","Could not save",ex);
+			if (ex.getMessage().startsWith("Server returned HTTP response code: 409 for URL"))
+			{
+				JOptionPane.showMessageDialog(null,"Another user has taken over editing of this resource, you will be unable to save your changes.","Resource Locked",JOptionPane.ERROR_MESSAGE);
+			}
+			else if (ex.getMessage().startsWith("Server returned HTTP response code: 401 for URL"))
+			{
+				JOptionPane.showMessageDialog(null,"You are no longer logged in to the server, your session probably expired.","Authentication Required",JOptionPane.ERROR_MESSAGE);
+			}
+			else
+			{
+				log.error("Unable to generate document",ex);
+				ErrorReporter.sendErrorReport(
+						"Unable to save","The file could not be saved, probably because the server is currently unavailable.",
+						"Swim","MenuEdit","Could not save",ex);
+			}
+			return false;
 		}
 	}
 	
 	public Action commitAction = new AbstractAction("Save & Commit") {
 		public void actionPerformed(ActionEvent e)
 		{
-			saveWorking();
-			context.showDocument(commitURL);
+			if (saveWorking())
+				context.showDocument(commitURL);
 		}
 	};
 
