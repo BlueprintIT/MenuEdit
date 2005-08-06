@@ -66,6 +66,9 @@
 			<radiobutton toolTipText="Make this menu item a link to a page in your website." action="radioInternalAction" enabled="false" id="radioInternal" text="Link to internal page">
 				<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="2" gridwidth="1" anchor="GridBagConstraints.FIRST_LINE_START"/>
 			</radiobutton>
+			<textfield enabled="false" id="textInternal">
+				<gridbagconstraints insets="2,2,2,2" gridx="1" gridy="2" weightx="1" fill="GridBagConstraints.HORIZONTAL" anchor="GridBagConstraints.FIRST_LINE_START"/>
+			</textfield>
 			<button toolTipText="Select the page in your site to link to." action="browseInternalAction" enabled="false" id="btnInternal" text="Browse...">
 				<gridbagconstraints insets="2,2,2,2" gridx="2" gridy="2" anchor="GridBagConstraints.FIRST_LINE_END" fill="GridBagConstraints.HORIZONTAL"/>
 			</button>

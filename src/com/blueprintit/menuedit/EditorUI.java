@@ -55,6 +55,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import com.blueprintit.errors.ErrorReporter;
+import com.blueprintit.swim.Page;
 import com.blueprintit.swim.PageBrowser;
 import com.blueprintit.swim.Request;
 import com.blueprintit.swim.SwimInterface;
@@ -69,7 +70,7 @@ public class EditorUI implements InterfaceListener
 		private Vector subitems = new Vector();
 		private String text = "Root";
 		private String url;
-		private String resource;
+		private Page page;
 		private String orientation = "vertical";
 		private boolean useURL=true;
 		private boolean hasLink=false;
@@ -86,7 +87,7 @@ public class EditorUI implements InterfaceListener
 			{
 				if (element.hasAttribute("resource"))
 				{
-					resource=element.getAttribute("resource");
+					page=swim.getPage(element.getAttribute("resource"));
 					useURL=false;
 					hasLink=true;
 				}
@@ -148,7 +149,7 @@ public class EditorUI implements InterfaceListener
 				}
 				else
 				{
-					el.setAttribute("resource",resource);
+					el.setAttribute("resource",page.getResource());
 				}
 			}
 			if (subitems.size()>0)
@@ -223,14 +224,14 @@ public class EditorUI implements InterfaceListener
 			return url;
 		}
 		
-		public void setResource(String value)
+		public void setPage(Page value)
 		{
-			this.resource=value;
+			this.page=value;
 		}
 		
-		public String getResource()
+		public Page getPage()
 		{
-			return resource;
+			return page;
 		}
 		
 		public String toString()
@@ -437,6 +438,7 @@ public class EditorUI implements InterfaceListener
 	public JRadioButton radioExternal;
 	public JButton btnInternal;
 	public JTextField textExternal;
+	public JTextField textInternal;
 	public JButton btnExternal;
 	
 	private boolean saveWorking()
@@ -526,6 +528,7 @@ public class EditorUI implements InterfaceListener
 			DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
 			model.insertNodeInto(item,parent,parent.getChildCount());
 			tree.setSelectionPath(item.getTreePath());
+			tree.scrollPathToVisible(item.getTreePath());
 		}
 	};
 
@@ -548,6 +551,7 @@ public class EditorUI implements InterfaceListener
 			model.removeNodeFromParent(item);
 			model.insertNodeInto(item,(MutableTreeNode)item.getParent(),pos);
 			tree.setSelectionPath(item.getTreePath());
+			tree.scrollPathToVisible(item.getTreePath());
 		}
 	};
 
@@ -560,6 +564,7 @@ public class EditorUI implements InterfaceListener
 			model.removeNodeFromParent(item);
 			model.insertNodeInto(item,(MutableTreeNode)item.getParent(),pos);
 			tree.setSelectionPath(item.getTreePath());
+			tree.scrollPathToVisible(item.getTreePath());
 		}
 	};
 
@@ -568,10 +573,11 @@ public class EditorUI implements InterfaceListener
 		{			
 			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
 			PageBrowser dlg = swim.getPageBrowser();
-			String page = dlg.choosePage(item.getResource());
-			if ((page!=null)&&(page.length()>0))
+			Page page = dlg.choosePage(item.getPage());
+			if (page!=null)
 			{
-				item.setResource(page);
+				item.setPage(page);
+				textInternal.setText(page.getTitle());
 			}
 		}
 	};
@@ -603,10 +609,11 @@ public class EditorUI implements InterfaceListener
 			{
 				MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
 				PageBrowser dlg = swim.getPageBrowser();
-				String page = dlg.choosePage();
-				if ((page!=null)&&(page.length()>0))
+				Page page = dlg.choosePage();
+				if (page!=null)
 				{
-					item.setResource(page);
+					textInternal.setText(page.getTitle());
+					item.setPage(page);
 					item.setHasLink(true);
 					item.setUseURL(false);
 				}
@@ -671,6 +678,7 @@ public class EditorUI implements InterfaceListener
 			DefaultTreeModel model = new DefaultTreeModel(root);
 			tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 			tree.setModel(model);
+			tree.setSelectionRow(0);
 			new JTreeDnDHandler(tree);
 			tree.addTreeSelectionListener(new TreeSelectionListener() {
 				public void valueChanged(TreeSelectionEvent e)
@@ -702,6 +710,8 @@ public class EditorUI implements InterfaceListener
 						radioNoLink.setEnabled(true);
 
 						textExternal.setText(item.getURL());
+						if (item.getPage()!=null)
+							textInternal.setText(item.getPage().getTitle());
 						if (item.getHasLink())
 						{
 							if (item.getUseURL())
