@@ -678,7 +678,6 @@ public class EditorUI implements InterfaceListener
 			DefaultTreeModel model = new DefaultTreeModel(root);
 			tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 			tree.setModel(model);
-			tree.setSelectionRow(0);
 			new JTreeDnDHandler(tree);
 			tree.addTreeSelectionListener(new TreeSelectionListener() {
 				public void valueChanged(TreeSelectionEvent e)
@@ -711,7 +710,13 @@ public class EditorUI implements InterfaceListener
 
 						textExternal.setText(item.getURL());
 						if (item.getPage()!=null)
+						{
 							textInternal.setText(item.getPage().getTitle());
+						}
+						else
+						{
+							textInternal.setText("");
+						}
 						if (item.getHasLink())
 						{
 							if (item.getUseURL())
@@ -742,6 +747,7 @@ public class EditorUI implements InterfaceListener
 				}
 			});
 			// TODO fix this
+			tree.setSelectionRow(0);
 			textExternal.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e)
 				{
