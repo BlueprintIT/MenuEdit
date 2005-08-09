@@ -485,7 +485,7 @@ public class EditorUI implements InterfaceListener
 			{
 				try
 				{
-					loadMenu(selected.getResource()+"/block/"+block+"/file/"+path);
+					loadMenu(selected.getResource()+"/block/"+block+"/file/"+path,null);
 				}
 				catch (Exception ex)
 				{
@@ -686,10 +686,11 @@ public class EditorUI implements InterfaceListener
 		commitURL=commit;
 	}
 	
-	public void loadMenu(String menu) throws Exception
+	public void loadMenu(String menu, String version) throws Exception
 	{
 		Request request = swim.getRequest("view",menu);
-		request.addParameter("version","temp");
+		if (version!=null)
+			request.addParameter("version","temp");
 		SAXBuilder builder = new SAXBuilder();
 		Document list = builder.build(request.encode());
 		root = new MenuItem(null,list.getRootElement());
@@ -779,7 +780,7 @@ public class EditorUI implements InterfaceListener
 					item.setURL(textExternal.getText());
 				}
 			});
-			loadMenu(resource+"/file/"+path);
+			loadMenu(resource+"/file/"+path,"temp");
 		}
 		catch (Exception e)
 		{
