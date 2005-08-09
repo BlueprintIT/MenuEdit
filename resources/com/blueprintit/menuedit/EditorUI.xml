@@ -25,6 +25,8 @@
 		<button action="cancelAction" focusable="false" toolTipText="Cancel editing and delete the working copy.">Cancel</button>
 		<button action="saveAction" focusable="false" toolTipText="Save the current edits to the working version.">Save Working Version</button>
 		<button action="commitAction" focusable="false" toolTipText="Save the current edits and commit this as a new version.">Save &amp; Commit</button>
+		<separator/>
+		<button action="loadAction" focusable="false" toolTipText="Loads the menu from another page">Load</button>
 	</toolbar>
 	<panel layout="BorderLayout">
 		<gridbagconstraints gridx="0" gridy="2" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>

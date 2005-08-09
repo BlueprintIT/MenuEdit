@@ -40,6 +40,8 @@ public class MenuEdit extends JApplet
 		try
 		{
 			String urlbase=getParameter("swim.base");
+			String resource=getParameter("resource");
+			String block=getParameter("pageblock");
 			String path=getParameter("menu");
 			try
 			{
@@ -48,7 +50,7 @@ public class MenuEdit extends JApplet
 				{
 					URL cancel = new URL(getParameter("cancel"));
 					URL commit = new URL(getParameter("commit"));
-					new UserInterface(new EditorUI(getAppletContext(),swim,path,cancel,commit),this);
+					new UserInterface(new EditorUI(getAppletContext(),swim,resource,path,block,cancel,commit),this);
 				}
 				catch (MalformedURLException e)
 				{

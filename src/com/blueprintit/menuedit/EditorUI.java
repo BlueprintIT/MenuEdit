@@ -44,15 +44,12 @@ import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.log4j.Logger;
-import org.jdom.input.DOMBuilder;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 import com.blueprintit.errors.ErrorReporter;
 import com.blueprintit.swim.Page;
@@ -83,35 +80,35 @@ public class EditorUI implements InterfaceListener
 		public MenuItem(MenuItem parent, Element element)
 		{
 			this(parent);
-			if (element.getTagName().equals("item"))
+			if (element.getName().equals("item"))
 			{
-				if (element.hasAttribute("resource"))
+				if (element.getAttribute("resource")!=null)
 				{
-					page=swim.getPage(element.getAttribute("resource"));
+					page=swim.getPage(element.getAttributeValue("resource"));
 					useURL=false;
 					hasLink=true;
 				}
-				else if (element.hasAttribute("url"))
+				else if (element.getAttribute("url")!=null)
 				{
-					url=element.getAttribute("url");
+					url=element.getAttributeValue("url");
 					useURL=true;
 					hasLink=true;
 				}
-				text=element.getAttribute("text");
-				Node node = element.getFirstChild();
-				while (node!=null)
+				text=element.getAttributeValue("text");
+				Iterator it = element.getChildren().iterator();
+				while (it.hasNext())
 				{
+					Object node = it.next();
 					if (node instanceof Element)
 					{
-						if (((Element)node).getTagName().equals("menu"))
+						if (((Element)node).getName().equals("menu"))
 						{
 							processMenuElement((Element)node);
 						}
 					}
-					node=node.getNextSibling();
 				}
 			}
-			else if (element.getTagName().equals("menu"))
+			else if (element.getName().equals("menu"))
 			{
 				processMenuElement(element);
 			}
@@ -119,27 +116,27 @@ public class EditorUI implements InterfaceListener
 		
 		private void processMenuElement(Element element)
 		{
-			if (element.hasAttribute("orientation"))
+			if (element.getAttribute("orientation")!=null)
 			{
-				orientation=element.getAttribute("orientation");
+				orientation=element.getAttributeValue("orientation");
 			}
-			Node node = element.getFirstChild();
-			while (node!=null)
+			Iterator it = element.getChildren().iterator();
+			while (it.hasNext())
 			{
+				Object node = it.next();
 				if (node instanceof Element)
 				{
-					if (((Element)node).getTagName().equals("item"))
+					if (((Element)node).getName().equals("item"))
 					{
 						subitems.add(new MenuItem(this,(Element)node));
 					}
 				}
-				node=node.getNextSibling();
 			}
 		}
 		
-		public Element getElement(Document doc)
+		public Element getElement()
 		{
-			Element el = doc.createElement("item");
+			Element el = new Element("item");
 			el.setAttribute("text",text);
 			if (hasLink)
 			{
@@ -154,20 +151,20 @@ public class EditorUI implements InterfaceListener
 			}
 			if (subitems.size()>0)
 			{
-				el.appendChild(getMenuElement(doc));
+				el.addContent(getMenuElement());
 			}
 			return el;
 		}
 		
-		public Element getMenuElement(Document doc)
+		public Element getMenuElement()
 		{
-			Element el = doc.createElement("menu");
+			Element el = new Element("menu");
 			el.setAttribute("orientation",orientation);
 			Iterator it = subitems.iterator();
 			while (it.hasNext())
 			{
 				MenuItem child = (MenuItem)it.next();
-				el.appendChild(child.getElement(doc));
+				el.addContent(child.getElement());
 			}
 			return el;
 		}
@@ -421,7 +418,6 @@ public class EditorUI implements InterfaceListener
 	private Logger log = Logger.getLogger(this.getClass());
 	
 	private SwimInterface swim;
-	private String menu;
 	private AppletContext context;
 	private URL cancelURL;
 	private URL commitURL;
@@ -445,15 +441,12 @@ public class EditorUI implements InterfaceListener
 	{
 		try
 		{
-			DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-			Document list=builder.newDocument();
-			list.appendChild(root.getMenuElement(list));
-
-			Request request = swim.getRequest(menu);
+			Request request = swim.getRequest(resource+"/file/"+path);
 			request.addParameter("version","temp");
 			Writer writer = request.openWriter();
 
-			org.jdom.Document doc = (new DOMBuilder()).build(list);
+			Document doc = new Document();
+			doc.setRootElement(root.getMenuElement());
 			XMLOutputter outputter = new XMLOutputter();
 			outputter.getFormat().setOmitEncoding(true);
 			outputter.getFormat().setOmitDeclaration(true);
@@ -482,6 +475,25 @@ public class EditorUI implements InterfaceListener
 			return false;
 		}
 	}
+	
+	public Action loadAction = new AbstractAction("Load") {
+		public void actionPerformed(ActionEvent e)
+		{
+			PageBrowser dlg = swim.getPageBrowser();
+			Page selected = dlg.choosePage();
+			if (selected!=null)
+			{
+				try
+				{
+					loadMenu(selected.getResource()+"/block/"+block+"/file/"+path);
+				}
+				catch (Exception ex)
+				{
+					log.error(ex);
+				}
+			}
+		}
+	};
 	
 	public Action commitAction = new AbstractAction("Save & Commit") {
 		public void actionPerformed(ActionEvent e)
@@ -657,27 +669,40 @@ public class EditorUI implements InterfaceListener
 		}
 	};
 
-	public EditorUI(AppletContext context, SwimInterface swim, String path, URL cancel, URL commit)
+	private String block;
+
+	private String resource;
+
+	private String path;
+
+	public EditorUI(AppletContext context, SwimInterface swim, String resource, String path, String block, URL cancel, URL commit)
 	{
 		this.context=context;
 		this.swim=swim;
-		this.menu=path;
+		this.resource=resource;
+		this.path=path;
+		this.block=block;
 		cancelURL=cancel;
 		commitURL=commit;
+	}
+	
+	public void loadMenu(String menu) throws Exception
+	{
+		Request request = swim.getRequest("view",menu);
+		request.addParameter("version","temp");
+		SAXBuilder builder = new SAXBuilder();
+		Document list = builder.build(request.encode());
+		root = new MenuItem(null,list.getRootElement());
+		DefaultTreeModel model = new DefaultTreeModel(root);	
+		tree.setModel(model);
+		tree.setSelectionRow(0);
 	}
 	
 	public void interfaceCreated(InterfaceEvent ev)
 	{
 		try
 		{
-			Request request = swim.getRequest("view",menu);
-			request.addParameter("version","temp");
-			DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-			Document list=builder.parse(request.encode().toString());
-			root = new MenuItem(null,list.getDocumentElement());
-			DefaultTreeModel model = new DefaultTreeModel(root);
 			tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-			tree.setModel(model);
 			new JTreeDnDHandler(tree);
 			tree.addTreeSelectionListener(new TreeSelectionListener() {
 				public void valueChanged(TreeSelectionEvent e)
@@ -747,7 +772,6 @@ public class EditorUI implements InterfaceListener
 				}
 			});
 			// TODO fix this
-			tree.setSelectionRow(0);
 			textExternal.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e)
 				{
@@ -755,6 +779,7 @@ public class EditorUI implements InterfaceListener
 					item.setURL(textExternal.getText());
 				}
 			});
+			loadMenu(resource+"/file/"+path);
 		}
 		catch (Exception e)
 		{
