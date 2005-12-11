@@ -20,11 +20,11 @@
 	</panel>
 	<panel>
 	  <gridbagconstraints gridx="1" gridy="0" gridwidth="1" anchor="GridBagConstraints.LINE_END"/>
-	  <label font="Arial-BOLD-22" foreground="0000FF" text="Site Structure"/>
+	  <label font="Arial-BOLD-24" foreground="0000FF" text="Site Structure"/>
 	</panel>
 	<panel layout="BorderLayout">
 		<gridbagconstraints gridx="0" gridy="1" gridwidth="2" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>
-		<scrollpane constraints="BorderLayout.CENTER">
+		<scrollpane id="scrollpane" constraints="BorderLayout.CENTER">
 			<tree id="tree"/>
 		</scrollpane>
 	</panel>

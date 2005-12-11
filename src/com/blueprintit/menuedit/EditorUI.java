@@ -42,6 +42,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -615,14 +616,14 @@ public class EditorUI implements InterfaceListener
 	
 	public JTree tree;
 	public JPopupMenu popup;
+	public JScrollPane scrollpane;
 	
 	private boolean saveWorking()
 	{
 		try
 		{
-			//Request request = swim.getRequest(resource);
-			//request.addParameter("version","temp");
-			//Writer writer = request.openWriter();
+			Request request = swim.getRequest("upload",upload);
+			Writer writer = request.openWriter();
 
 			Document doc = new Document();
 			doc.setRootElement(mainroot.getElement());
@@ -631,7 +632,7 @@ public class EditorUI implements InterfaceListener
 			outputter.getFormat().setOmitDeclaration(true);
 			outputter.output(doc,System.out);
 		  
-			//writer.close();
+			writer.close();
 			return true;
 		}
 		catch (Exception ex)
@@ -659,8 +660,8 @@ public class EditorUI implements InterfaceListener
 	public Action commitAction = new AbstractAction("Save") {
 		public void actionPerformed(ActionEvent e)
 		{
-			if (saveWorking()) return;
-				//context.showDocument(commitURL);
+			if (saveWorking())
+				context.showDocument(commitURL);
 		}
 	};
 
@@ -782,12 +783,14 @@ public class EditorUI implements InterfaceListener
 	};
 
 	private String resource;
+	private String upload;
 
-	public EditorUI(AppletContext context, SwimInterface swim, String resource, URL cancel, URL commit)
+	public EditorUI(AppletContext context, SwimInterface swim, String resource, String upload, URL cancel, URL commit)
 	{
 		this.context=context;
 		this.swim=swim;
 		this.resource=resource;
+		this.upload=upload;
 		cancelURL=cancel;
 		commitURL=commit;
 	}
@@ -807,10 +810,6 @@ public class EditorUI implements InterfaceListener
 		DefaultTreeModel model = new DefaultTreeModel(root);	
 		tree.setModel(model);
 		tree.setSelectionRow(0);
-		tree.setRootVisible(false);
-		tree.setShowsRootHandles(true);
-		tree.setScrollsOnExpand(false);
-		tree.putClientProperty("JTree.lineStyle", "None");
 		
 		Enumeration en = unused.children();
 		while (en.hasMoreElements())
@@ -829,6 +828,11 @@ public class EditorUI implements InterfaceListener
 	{
 		try
 		{
+			tree.setRootVisible(false);
+			tree.setShowsRootHandles(true);
+			tree.setScrollsOnExpand(false);
+			tree.putClientProperty("JTree.lineStyle", "None");
+			scrollpane.setBorder(null);
 			tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 			new JTreeDnDHandler(tree);
 			tree.addTreeSelectionListener(new TreeSelectionListener() {
