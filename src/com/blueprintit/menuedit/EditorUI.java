@@ -630,7 +630,7 @@ public class EditorUI implements InterfaceListener
 			XMLOutputter outputter = new XMLOutputter();
 			outputter.getFormat().setOmitEncoding(true);
 			outputter.getFormat().setOmitDeclaration(true);
-			outputter.output(doc,System.out);
+			outputter.output(doc,writer);
 		  
 			writer.close();
 			return true;
