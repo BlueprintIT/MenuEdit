@@ -6,83 +6,26 @@
 -->
 
 <applet layout="GridBagLayout">
-	<panel layout="GridBagLayout">
-		<gridbagconstraints gridx="0" gridy="0" gridwidth="2" fill="GridBagConstraints.HORIZONTAL"/>
-		<label font="Arial-BOLD-14" foreground="0000FF" icon="com/blueprintit/menuedit/icons/icon.gif" text="Menu Editor">
-			<gridbagconstraints gridx="0" gridy="0"/>
-		</label>
-		<panel layout="FlowLayout">
-			<gridbagconstraints gridx="1" gridy="0" weightx="1"/>
-			<label icon="com/blueprintit/menuedit/icons/swimlogo.gif"/>
-			<label text="by"/>
-			<label icon="com/blueprintit/menuedit/icons/bpitlogo.gif"/>
-		</panel>
-	</panel>
-	<toolbar rollover="true" floatable="false">
-		<gridbagconstraints gridx="0" gridy="1" gridwidth="2" fill="GridBagConstraints.HORIZONTAL"/>
-		<label>General</label>
-		<separator/>
+  <popupmenu id="popup">
+    <menuitem action="menuRenameAction"/>
+    <menuitem action="menuMoveUpAction"/>
+    <menuitem action="menuMoveDownAction"/>
+    <menuitem action="menuAddCategoryAction"/>
+    <menuitem action="menuDeleteAction"/>
+  </popupmenu>
+	<panel>
+		<gridbagconstraints gridx="0" gridy="0" gridwidth="1" fill="GridBagConstraints.HORIZONTAL"/>
 		<button action="cancelAction" focusable="false" toolTipText="Cancel editing and delete the working copy.">Cancel</button>
-		<button action="saveAction" focusable="false" toolTipText="Save the current edits to the working version.">Save Working Version</button>
 		<button action="commitAction" focusable="false" toolTipText="Save the current edits and commit this as a new version.">Save &amp; Commit</button>
-		<separator/>
-		<button action="loadAction" focusable="false" toolTipText="Loads the menu from another page">Load</button>
-	</toolbar>
+	</panel>
+	<panel>
+	  <gridbagconstraints gridx="1" gridy="0" gridwidth="1" anchor="GridBagConstraints.LINE_END"/>
+	  <label font="Arial-BOLD-22" foreground="0000FF" text="Site Structure"/>
+	</panel>
 	<panel layout="BorderLayout">
-		<gridbagconstraints gridx="0" gridy="2" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>
-		<label text="Menu structure" constraints="BorderLayout.NORTH"/>
+		<gridbagconstraints gridx="0" gridy="1" gridwidth="2" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>
 		<scrollpane constraints="BorderLayout.CENTER">
 			<tree id="tree"/>
 		</scrollpane>
-	</panel>
-	<panel layout="GridBagLayout">
-		<gridbagconstraints gridx="1" gridy="2" gridheight="2" weightx="0" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.BOTH"/>
-		<label text="Modify structure">
-			<gridbagconstraints gridx="0" gridy="0" insets="2,2,2,2" anchor="GridBagConstraints.EAST"/>
-		</label>
-		<button id="btnRename" enabled="false" action="menuRenameAction" toolTipText="Rename the selected menu item.">
-			<gridbagconstraints gridx="0" gridy="1" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
-		</button>
-		<button id="btnAdd" enabled="false" action="menuAddAction" toolTipText="Add a new menu item to the selected menu.">
-			<gridbagconstraints gridx="0" gridy="2" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
-		</button>
-		<button id="btnDel" enabled="false" action="menuDeleteAction" toolTipText="Delete the selected menu item.">
-			<gridbagconstraints gridx="0" gridy="3" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
-		</button>
-		<button id="btnUp" enabled="false" action="menuMoveUpAction" toolTipText="Move the selected menu item up the menu.">
-			<gridbagconstraints gridx="0" gridy="4" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
-		</button>
-		<button id="btnDown" enabled="false" action="menuMoveDownAction" toolTipText="Move the selected menu item down the menu.">
-			<gridbagconstraints gridx="0" gridy="5" weighty="1" insets="2,2,2,2" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.HORIZONTAL"/>
-		</button>
-	</panel>
-	<panel layout="GridBagLayout">
-		<gridbagconstraints gridx="0" gridy="3" anchor="GridBagConstraints.PAGE_START" fill="GridBagConstraints.BOTH"/>
-		<label text="Menu item properties">
-			<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="0" anchor="GridBagConstraints.FIRST_LINE_START"/>
-		</label>
-		<buttongroup>
-			<radiobutton toolTipText="Don't make this menu item a link to anywhere." action="radioNoLinkAction" enabled="false" id="radioNoLink" text="Do not link">
-				<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="1" gridwidth="1" anchor="GridBagConstraints.FIRST_LINE_START"/>
-			</radiobutton>
-			<radiobutton toolTipText="Make this menu item a link to a page in your website." action="radioInternalAction" enabled="false" id="radioInternal" text="Link to internal page">
-				<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="2" gridwidth="1" anchor="GridBagConstraints.FIRST_LINE_START"/>
-			</radiobutton>
-			<textfield enabled="false" id="textInternal">
-				<gridbagconstraints insets="2,2,2,2" gridx="1" gridy="2" weightx="1" fill="GridBagConstraints.HORIZONTAL" anchor="GridBagConstraints.FIRST_LINE_START"/>
-			</textfield>
-			<button toolTipText="Select the page in your site to link to." action="browseInternalAction" enabled="false" id="btnInternal" text="Browse...">
-				<gridbagconstraints insets="2,2,2,2" gridx="2" gridy="2" anchor="GridBagConstraints.FIRST_LINE_END" fill="GridBagConstraints.HORIZONTAL"/>
-			</button>
-			<radiobutton toolTipText="Make this menu item a link to an external webpage." action="radioExternalAction" enabled="false" id="radioExternal" text="Link to external website">
-				<gridbagconstraints insets="2,2,2,2" gridx="0" gridy="3" weighty="1" gridwidth="1" anchor="GridBagConstraints.FIRST_LINE_START"/>
-			</radiobutton>
-			<textfield enabled="false" id="textExternal">
-				<gridbagconstraints insets="2,2,2,2" gridx="1" gridy="3" weightx="1" fill="GridBagConstraints.HORIZONTAL" anchor="GridBagConstraints.FIRST_LINE_START"/>
-			</textfield>
-			<button toolTipText="Change the webpage that this menu item links to." action="changeExternalAction" enabled="false" id="btnExternal" text="Change...">
-				<gridbagconstraints insets="2,2,2,2" gridx="2" gridy="3" anchor="GridBagConstraints.FIRST_LINE_END" fill="GridBagConstraints.HORIZONTAL"/>
-			</button>
-		</buttongroup>
 	</panel>
 </applet>

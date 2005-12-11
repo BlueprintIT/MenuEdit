@@ -23,19 +23,25 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.Writer;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JButton;
 import javax.swing.JOptionPane;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
+import javax.swing.JPopupMenu;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -52,8 +58,6 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
 import com.blueprintit.errors.ErrorReporter;
-import com.blueprintit.swim.Page;
-import com.blueprintit.swim.PageBrowser;
 import com.blueprintit.swim.Request;
 import com.blueprintit.swim.SwimInterface;
 import com.blueprintit.xui.InterfaceEvent;
@@ -61,184 +65,258 @@ import com.blueprintit.xui.InterfaceListener;
 
 public class EditorUI implements InterfaceListener
 {
-	private class MenuItem implements MutableTreeNode
+	private abstract class Item implements MutableTreeNode, Comparable
 	{
-		private MenuItem parent;
-		private Vector subitems = new Vector();
-		private String text = "Root";
-		private String url;
-		private Page page;
-		private String orientation = "vertical";
-		private boolean useURL=true;
-		private boolean hasLink=false;
+		protected CategoryItem parent;
+		protected String name;
 		
-		public MenuItem(MenuItem parent)
+		private Item(String name)
 		{
-			this.parent=parent;
+			this.name=name;
 		}
 		
-		public MenuItem(MenuItem parent, Element element)
+		private Item(Element el)
 		{
-			this(parent);
-			if (element.getName().equals("item"))
-			{
-				if (element.getAttribute("resource")!=null)
-				{
-					page=swim.getPage(element.getAttributeValue("resource"));
-					useURL=false;
-					hasLink=true;
-				}
-				else if (element.getAttribute("url")!=null)
-				{
-					url=element.getAttributeValue("url");
-					useURL=true;
-					hasLink=true;
-				}
-				text=element.getAttributeValue("text");
-				Iterator it = element.getChildren().iterator();
-				while (it.hasNext())
-				{
-					Object node = it.next();
-					if (node instanceof Element)
-					{
-						if (((Element)node).getName().equals("menu"))
-						{
-							processMenuElement((Element)node);
-						}
-					}
-				}
-			}
-			else if (element.getName().equals("menu"))
-			{
-				processMenuElement(element);
-			}
+			this.name = el.getText().trim();
 		}
 		
-		private void processMenuElement(Element element)
+		public abstract Item deepClone();
+		
+		protected void cloneInto(Item item)
 		{
-			if (element.getAttribute("orientation")!=null)
+		}
+		
+		protected abstract String getType();
+		
+		public String toString()
+		{
+			return name;
+		}
+		
+		public Element getElement()
+		{
+			Element el = new Element(getType());
+			el.addContent(this.toString());
+			return el;
+		}
+		
+		public int compareTo(Object obj)
+		{
+			return this.toString().compareTo(obj.toString());
+		}
+		
+		public TreePath getTreePath()
+		{
+			if (parent!=null)
 			{
-				orientation=element.getAttributeValue("orientation");
+				return parent.getTreePath().pathByAddingChild(this);
 			}
-			Iterator it = element.getChildren().iterator();
+			return new TreePath(this);
+		}
+		
+		public void insert(MutableTreeNode node, int pos)
+		{
+		}
+
+		public void remove(int pos)
+		{
+		}
+
+		public void remove(MutableTreeNode node)
+		{
+		}
+
+		public void setUserObject(Object obj)
+		{
+		}
+
+		public void removeFromParent()
+		{
+			this.parent.remove(this);
+			this.parent=null;
+		}
+
+		public void setParent(MutableTreeNode node)
+		{
+			this.parent=(CategoryItem)node;
+		}
+
+		public TreeNode getChildAt(int arg0)
+		{
+			return null;
+		}
+
+		public int getChildCount()
+		{
+			return 0;
+		}
+
+		public TreeNode getParent()
+		{
+			return parent;
+		}
+
+		public int getIndex(TreeNode arg0)
+		{
+			return -1;
+		}
+
+		public boolean getAllowsChildren()
+		{
+			return false;
+		}
+
+		public boolean isLeaf()
+		{
+			return true;
+		}
+
+		public Enumeration children()
+		{
+			return null;
+		}
+	}
+	
+	private class CategoryItem extends Item
+	{
+		private List children = new ArrayList();
+		private boolean sorted = false;
+		
+		CategoryItem(String name)
+		{
+			super(name);
+		}
+		
+		CategoryItem(String name, boolean sorted)
+		{
+			super(name);
+			this.sorted=sorted;
+		}
+		
+		CategoryItem(Element el)
+		{
+			super(el);
+			parseChildren(el);
+		}
+		
+		public void parseChildren(Element el)
+		{
+			Iterator it = el.getChildren().iterator();
 			while (it.hasNext())
 			{
-				Object node = it.next();
-				if (node instanceof Element)
+				Element ch = (Element)it.next();
+				if (ch.getName()=="category")
 				{
-					if (((Element)node).getName().equals("item"))
-					{
-						subitems.add(new MenuItem(this,(Element)node));
-					}
+					Item newitem = new CategoryItem(ch);
+					append(newitem);
+				}
+				else if (ch.getName()=="page")
+				{
+					Item newitem = new PageItem(ch);
+					append(newitem);
+				}
+				else if (ch.getName()=="link")
+				{
+					Item newitem = new LinkItem(ch);
+					append(newitem);
 				}
 			}
 		}
 		
 		public Element getElement()
 		{
-			Element el = new Element("item");
-			el.setAttribute("text",text);
-			if (hasLink)
-			{
-				if (useURL)
-				{
-					el.setAttribute("url",url);
-				}
-				else
-				{
-					el.setAttribute("resource",page.getResource());
-				}
-			}
-			if (subitems.size()>0)
-			{
-				el.addContent(getMenuElement());
-			}
+			Element el = parent.getElement();
 			return el;
 		}
 		
-		public Element getMenuElement()
+		public Item deepClone()
 		{
-			Element el = new Element("menu");
-			el.setAttribute("orientation",orientation);
-			Iterator it = subitems.iterator();
+			CategoryItem clone = new CategoryItem(name);
+			parent.cloneInto(clone);
+			Iterator it = children.iterator();
 			while (it.hasNext())
 			{
-				MenuItem child = (MenuItem)it.next();
-				el.addContent(child.getElement());
+				Item item = (Item)it.next();
+				clone.append(item.deepClone());
 			}
-			return el;
+			return clone;
 		}
 		
-		public TreePath getTreePath()
+		public void setName(String name)
 		{
-			if (parent==null)
+			this.name=name;
+		}
+		
+		protected String getType()
+		{
+			return "category";
+		}
+		
+		private int getInsertPos(MutableTreeNode node)
+		{
+			int pos = Collections.binarySearch(children,node);
+			if (pos<0)
 			{
-				return new TreePath(this);
+				pos=-(pos+1);
 			}
-			else
-			{
-				return parent.getTreePath().pathByAddingChild(this);
-			}
+			return pos;
 		}
 		
-		public boolean getHasLink()
+		public int append(MutableTreeNode node)
 		{
-			return hasLink;
+			int pos = children.size();
+			if (sorted)
+				pos=getInsertPos(node);
+			this.insert(node,pos);
+			return pos;
 		}
 		
-		public void setHasLink(boolean value)
+		public void insert(MutableTreeNode node, int pos)
 		{
-			hasLink=value;
+			children.add(pos,node);
+			node.setParent(this);
 		}
-		
-		public boolean getUseURL()
+
+		public void remove(int pos)
 		{
-			return useURL;
+			Item node = (Item)children.remove(pos);
+			node.setParent(null);
 		}
-		
-		public void setUseURL(boolean value)
+
+		public void remove(MutableTreeNode node)
 		{
-			useURL=value;
+			children.remove(node);
+			node.setParent(null);
 		}
-		
-		public void setText(String value)
+
+		public void setUserObject(Object obj)
 		{
-			this.text=value;
 		}
-		
-		public String getText()
+
+		public void removeFromParent()
 		{
-			return text;
+			this.parent.remove(this);
+			this.parent=null;
 		}
-		
-		public void setURL(String value)
+
+		public void setParent(MutableTreeNode node)
 		{
-			this.url=value;
+			this.parent=(CategoryItem)node;
 		}
-		
-		public String getURL()
+
+		public TreeNode getChildAt(int pos)
 		{
-			return url;
+			return (TreeNode)children.get(pos);
 		}
-		
-		public void setPage(Page value)
-		{
-			this.page=value;
-		}
-		
-		public Page getPage()
-		{
-			return page;
-		}
-		
-		public String toString()
-		{
-			return text;
-		}
-		
+
 		public int getChildCount()
 		{
-			return subitems.size();
+			return children.size();
+		}
+
+		public int getIndex(TreeNode node)
+		{
+			return children.indexOf(node);
 		}
 
 		public boolean getAllowsChildren()
@@ -248,60 +326,124 @@ public class EditorUI implements InterfaceListener
 
 		public boolean isLeaf()
 		{
-			return getChildCount()==0;
+			return false;
 		}
 
 		public Enumeration children()
 		{
-			return subitems.elements();
-		}
-
-		public TreeNode getParent()
-		{
-			return parent;
-		}
-
-		public TreeNode getChildAt(int childIndex)
-		{
-			return (TreeNode)subitems.get(childIndex);
-		}
-
-		public int getIndex(TreeNode node)
-		{
-			return subitems.indexOf(node);
-		}
-
-		public void removeFromParent()
-		{
-			parent=null;			
-		}
-
-		public void remove(int index)
-		{
-			subitems.remove(index);
-		}
-
-		public void setUserObject(Object object)
-		{
-			text=object.toString();
-		}
-
-		public void remove(MutableTreeNode node)
-		{
-			subitems.remove(node);
-		}
-
-		public void setParent(MutableTreeNode newParent)
-		{
-			parent=(MenuItem)newParent;
-		}
-
-		public void insert(MutableTreeNode child, int index)
-		{
-			subitems.add(index,(MenuItem)child);
+			return (new Vector(children)).elements();
 		}
 	}
 	
+	private class PageItem extends Item
+	{
+		protected String path;
+		
+		PageItem(String name, String path)
+		{
+			super(name);
+			this.path=path;
+			addToCache();
+		}
+		
+		PageItem(Element el)
+		{
+			super(el);
+			this.path=el.getAttributeValue("path");
+			addToCache();
+		}
+		
+		private void addToCache()
+		{
+			if (pagecache.containsKey(path))
+			{
+				log.debug("Duplicate page added");
+				((Set)pagecache.get(path)).add(this);
+			}
+			else
+			{
+				Set col = new HashSet();
+				col.add(this);
+				pagecache.put(path,col);
+			}
+		}
+		
+		public Element getElement()
+		{
+			Element el = parent.getElement();
+			el.setAttribute("path",path);
+			return el;
+		}
+
+		public Item deepClone()
+		{
+			PageItem clone = new PageItem(name,path);
+			parent.cloneInto(clone);
+			return clone;
+		}
+		
+		protected String getType()
+		{
+			return "page";
+		}
+		
+		public String getPath()
+		{
+			return path;
+		}
+	}
+	
+	private class LinkItem extends Item
+	{
+		protected String path;
+		
+		LinkItem(String name, String path)
+		{
+			super(name);
+			this.path=path;
+		}
+		
+		LinkItem(Element el)
+		{
+			super(el);
+			this.path=el.getAttributeValue("path");
+		}
+		
+		public Element getElement()
+		{
+			Element el = parent.getElement();
+			el.setAttribute("path",path);
+			return el;
+		}
+
+		protected String getType()
+		{
+			return "link";
+		}
+
+		public void setName(String name)
+		{
+			this.name=name;
+		}
+		
+		public Item deepClone()
+		{
+			LinkItem clone = new LinkItem(name,path);
+			parent.cloneInto(clone);
+			return clone;
+		}
+		
+		public String getPath()
+		{
+			return path;
+		}
+		
+		public void setPath(String path)
+		{
+			this.path=path;
+		}
+	}
+		
 	private class JTreeDnDHandler implements DragGestureListener, DropTargetListener, DragSourceListener
 	{
 		private Logger log = Logger.getLogger(this.getClass());
@@ -314,28 +456,32 @@ public class EditorUI implements InterfaceListener
 			this.tree=tree;
 			DragSource source = new DragSource();
 			source.addDragSourceListener(this);
-			source.createDefaultDragGestureRecognizer(tree,DnDConstants.ACTION_MOVE,this);
-			new DropTarget(tree,DnDConstants.ACTION_MOVE,this,true);
+			source.createDefaultDragGestureRecognizer(tree,DnDConstants.ACTION_COPY_OR_MOVE,this);
+			new DropTarget(tree,DnDConstants.ACTION_COPY_OR_MOVE,this,true);
 		}
 		
-		private boolean isAcceptableDrag(Point loc)
+		private boolean isAcceptableDrag(int operation, Point loc)
 		{
-			if (source!=null)
-			{
-				TreePath target = tree.getClosestPathForLocation(loc.x,loc.y);
-				if (!source.isDescendant(target))
-				{
-					if (((TreeNode)source.getLastPathComponent()).getParent()!=target.getLastPathComponent())
-						return true;
-				}
-			}
-			return false;
+			if (source==null)
+				return false;
+			
+			TreePath target = tree.getClosestPathForLocation(loc.x,loc.y);
+			if (source.isDescendant(target))
+				return false;
+
+			if (target.getPathComponent(1)==unused)
+				return false;
+			
+			if ((operation==DnDConstants.ACTION_COPY)&&(source.getPathComponent(1)==unused))
+				return false;
+
+			return true;
 		}
 		
 		public void dragGestureRecognized(DragGestureEvent dge)
 		{
 			source = tree.getSelectionPath();
-			if (source.getPathCount()>1)
+			if ((source!=null)&&(source.getPathCount()>2))
 			{
 				StringSelection text = new StringSelection(source.toString());
 				dge.startDrag(DragSource.DefaultMoveNoDrop,text);
@@ -348,9 +494,9 @@ public class EditorUI implements InterfaceListener
 
 		public void dragEnter(DropTargetDragEvent dtde)
 		{
-			if (isAcceptableDrag(dtde.getLocation()))
+			if (isAcceptableDrag(dtde.getDropAction(),dtde.getLocation()))
 			{
-				dtde.acceptDrag(DnDConstants.ACTION_MOVE);
+				dtde.acceptDrag(dtde.getDropAction());
 			}
 			else
 			{
@@ -374,16 +520,35 @@ public class EditorUI implements InterfaceListener
 			if (source!=null)
 			{
 				TreePath target = tree.getClosestPathForLocation(dtde.getLocation().x,dtde.getLocation().y);
-				if (!source.isDescendant(target))
+				MutableTreeNode node = (MutableTreeNode)source.getLastPathComponent();
+				MutableTreeNode dest = (MutableTreeNode)target.getLastPathComponent();
+				int insertpos=dest.getChildCount();
+				if (!dest.getAllowsChildren())
 				{
-					MutableTreeNode node = (MutableTreeNode)source.getLastPathComponent();
-					MutableTreeNode dest = (MutableTreeNode)target.getLastPathComponent();
-					DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
-					model.removeNodeFromParent(node);
-					model.insertNodeInto(node,dest,dest.getChildCount());
-					node.setParent(dest);
-					dtde.dropComplete(true);
+					insertpos=dest.getParent().getIndex(dest);
+					dest=(MutableTreeNode)dest.getParent();
 				}
+				else if (node.getParent()==dest)
+				{
+					insertpos--;
+					if ((insertpos==dest.getIndex(node))&&(dtde.getDropAction()==DnDConstants.ACTION_MOVE))
+					{
+						dtde.rejectDrop();
+						return;
+					}
+				}
+				DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+				if (dtde.getDropAction()==DnDConstants.ACTION_MOVE)
+				{
+					model.removeNodeFromParent(node);
+					model.insertNodeInto(node,dest,insertpos);
+				}
+				else if (dtde.getDropAction()==DnDConstants.ACTION_COPY)
+				{
+					Item newnode = ((Item)node).deepClone();
+					model.insertNodeInto(newnode,dest,insertpos);
+				}
+				dtde.dropComplete(true);
 			}
 			dtde.rejectDrop();
 		}
@@ -394,15 +559,27 @@ public class EditorUI implements InterfaceListener
 
 		public void dragEnter(DragSourceDragEvent dsde)
 		{
-			dsde.getDragSourceContext().setCursor(DragSource.DefaultMoveDrop);
+			switch (dsde.getDropAction())
+			{
+				case DnDConstants.ACTION_COPY:
+					dsde.getDragSourceContext().setCursor(DragSource.DefaultCopyDrop);
+					break;
+				case DnDConstants.ACTION_MOVE:
+					dsde.getDragSourceContext().setCursor(DragSource.DefaultMoveDrop);
+					break;
+				default:
+					dsde.getDragSourceContext().setCursor(DragSource.DefaultMoveNoDrop);
+			}
 		}
 
 		public void dragOver(DragSourceDragEvent dsde)
 		{
+			dragEnter(dsde);
 		}
 
 		public void dropActionChanged(DragSourceDragEvent dsde)
 		{
+			dragEnter(dsde);
 		}
 
 		public void dragDropEnd(DragSourceDropEvent dsde)
@@ -421,32 +598,24 @@ public class EditorUI implements InterfaceListener
 	private AppletContext context;
 	private URL cancelURL;
 	private URL commitURL;
-	private MenuItem root;
+	private CategoryItem root;
+	private CategoryItem mainroot;
+	private CategoryItem unused;
+	private Map pagecache = new HashMap();
 	
 	public JTree tree;
-	public JButton btnRename;
-	public JButton btnAdd;
-	public JButton btnDel;
-	public JButton btnUp;
-	public JButton btnDown;
-	public JRadioButton radioNoLink;
-	public JRadioButton radioInternal;
-	public JRadioButton radioExternal;
-	public JButton btnInternal;
-	public JTextField textExternal;
-	public JTextField textInternal;
-	public JButton btnExternal;
+	public JPopupMenu popup;
 	
 	private boolean saveWorking()
 	{
 		try
 		{
-			Request request = swim.getRequest(resource+"/file/"+path);
+			Request request = swim.getRequest(resource);
 			request.addParameter("version","temp");
 			Writer writer = request.openWriter();
 
 			Document doc = new Document();
-			doc.setRootElement(root.getMenuElement());
+			doc.setRootElement(mainroot.getElement());
 			XMLOutputter outputter = new XMLOutputter();
 			outputter.getFormat().setOmitEncoding(true);
 			outputter.getFormat().setOmitDeclaration(true);
@@ -476,37 +645,11 @@ public class EditorUI implements InterfaceListener
 		}
 	}
 	
-	public Action loadAction = new AbstractAction("Load") {
-		public void actionPerformed(ActionEvent e)
-		{
-			PageBrowser dlg = swim.getPageBrowser();
-			Page selected = dlg.choosePage();
-			if (selected!=null)
-			{
-				try
-				{
-					loadMenu(selected.getResource()+"/block/"+block+"/file/"+path,null);
-				}
-				catch (Exception ex)
-				{
-					log.error(ex);
-				}
-			}
-		}
-	};
-	
-	public Action commitAction = new AbstractAction("Save & Commit") {
+	public Action commitAction = new AbstractAction("Save") {
 		public void actionPerformed(ActionEvent e)
 		{
 			if (saveWorking())
 				context.showDocument(commitURL);
-		}
-	};
-
-	public Action saveAction = new AbstractAction("Save Working Copy") {
-		public void actionPerformed(ActionEvent e)
-		{
-			saveWorking();
 		}
 	};
 
@@ -520,36 +663,81 @@ public class EditorUI implements InterfaceListener
 	public Action menuRenameAction = new AbstractAction("Rename...") {
 		public void actionPerformed(ActionEvent e)
 		{
-			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-			String text = JOptionPane.showInputDialog("Enter a name for this menu:",item.getText());
-			if (text!=null)
+			Item item = (Item)tree.getSelectionPath().getLastPathComponent();
+			if ((item instanceof LinkItem)||(item instanceof CategoryItem))
 			{
-				item.setText(text);
-				DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
-				model.nodeChanged(item);
+				String text = JOptionPane.showInputDialog("Enter a new name for this category:",item.toString());
+				if (text!=null)
+				{
+					if (item instanceof CategoryItem)
+						((CategoryItem)item).setName(text);
+					else
+						((LinkItem)item).setName(text);
+					DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+					model.nodeChanged(item);
+				}
 			}
 		}
 	};
 
-	public Action menuAddAction = new AbstractAction("Add") {
+	public Action menuAddCategoryAction = new AbstractAction("Add Category") {
 		public void actionPerformed(ActionEvent e)
 		{
-			MenuItem parent = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-			MenuItem item = new MenuItem(parent);
-			item.setText("New Menu Item");
-			DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
-			model.insertNodeInto(item,parent,parent.getChildCount());
-			tree.setSelectionPath(item.getTreePath());
-			tree.scrollPathToVisible(item.getTreePath());
+			String text = JOptionPane.showInputDialog("Enter a name for this category:","");
+			if (text!=null)
+			{
+				CategoryItem parent = (CategoryItem)tree.getSelectionPath().getLastPathComponent();
+				CategoryItem item = new CategoryItem(text);
+				DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+				model.insertNodeInto(item,parent,parent.getChildCount());
+				tree.setSelectionPath(item.getTreePath());
+				tree.scrollPathToVisible(item.getTreePath());
+			}
 		}
 	};
 
-	public Action menuDeleteAction = new AbstractAction("Delete") {
+	public boolean claimUnused(Item item)
+	{
+		if (item instanceof PageItem)
+		{
+			PageItem page = (PageItem)item;
+			Set set = (Set)pagecache.get(page.getPath());
+			if (set.size()==1)
+			{
+				log.debug("Found a soon to be uncategorised page");
+				DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+				model.removeNodeFromParent(page);
+				int pos = unused.append(page);
+				model.nodesWereInserted(unused,new int[] {pos});
+				return true;
+			}
+			else
+			{
+				log.debug("Removing an already linked page");
+				set.remove(page);
+			}
+		}
+		else if (item instanceof CategoryItem)
+		{
+			CategoryItem cat = (CategoryItem)item;
+			Enumeration en = cat.children();
+			while (en.hasMoreElements())
+			{
+				claimUnused((Item)en.nextElement());
+			}
+		}
+		return false;
+	}
+	
+	public Action menuDeleteAction = new AbstractAction("Remove from Category") {
 		public void actionPerformed(ActionEvent e)
 		{
-			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-			DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
-			model.removeNodeFromParent(item);
+			Item item = (Item)tree.getSelectionPath().getLastPathComponent();
+			if (!claimUnused(item))
+			{
+				DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+				model.removeNodeFromParent(item);
+			}
 			tree.clearSelection();
 		}
 	};
@@ -557,11 +745,12 @@ public class EditorUI implements InterfaceListener
 	public Action menuMoveUpAction = new AbstractAction("Move Up") {
 		public void actionPerformed(ActionEvent e)
 		{			
-			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
+			Item item = (Item)tree.getSelectionPath().getLastPathComponent();
 			DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
 			int pos = item.getParent().getIndex(item)-1;
+			MutableTreeNode parent = (MutableTreeNode)item.getParent();
 			model.removeNodeFromParent(item);
-			model.insertNodeInto(item,(MutableTreeNode)item.getParent(),pos);
+			model.insertNodeInto(item,parent,pos);
 			tree.setSelectionPath(item.getTreePath());
 			tree.scrollPathToVisible(item.getTreePath());
 		}
@@ -570,133 +759,59 @@ public class EditorUI implements InterfaceListener
 	public Action menuMoveDownAction = new AbstractAction("Move Down") {
 		public void actionPerformed(ActionEvent e)
 		{			
-			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
+			Item item = (Item)tree.getSelectionPath().getLastPathComponent();
 			DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
 			int pos = item.getParent().getIndex(item)+1;
+			MutableTreeNode parent = (MutableTreeNode)item.getParent();
 			model.removeNodeFromParent(item);
-			model.insertNodeInto(item,(MutableTreeNode)item.getParent(),pos);
+			model.insertNodeInto(item,parent,pos);
 			tree.setSelectionPath(item.getTreePath());
 			tree.scrollPathToVisible(item.getTreePath());
 		}
 	};
 
-	public Action browseInternalAction = new AbstractAction() {
-		public void actionPerformed(ActionEvent e)
-		{			
-			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-			PageBrowser dlg = swim.getPageBrowser();
-			Page page = dlg.choosePage(item.getPage());
-			if (page!=null)
-			{
-				item.setPage(page);
-				textInternal.setText(page.getTitle());
-			}
-		}
-	};
-
-	public Action changeExternalAction = new AbstractAction() {
-		public void actionPerformed(ActionEvent e)
-		{
-			MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-			String text = JOptionPane.showInputDialog("Enter a URL for this menu item:",item.getURL());
-			if (text!=null)
-			{
-				item.setURL(text);
-				textExternal.setText(text);
-			}
-		}
-	};
-
-	private void radioSelectionChanged()
-	{
-		btnInternal.setEnabled(radioInternal.isSelected()&&radioInternal.isEnabled());
-		btnExternal.setEnabled(radioExternal.isSelected()&&radioExternal.isEnabled());
-	}
-	
-	public Action radioInternalAction = new AbstractAction() {
-		public void actionPerformed(ActionEvent e)
-		{
-			radioSelectionChanged();
-			if (radioInternal.isSelected())
-			{
-				MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-				PageBrowser dlg = swim.getPageBrowser();
-				Page page = dlg.choosePage();
-				if (page!=null)
-				{
-					textInternal.setText(page.getTitle());
-					item.setPage(page);
-					item.setHasLink(true);
-					item.setUseURL(false);
-				}
-				else
-				{
-					if (item.getHasLink())
-					{
-						radioExternal.setSelected(true);
-					}
-					else
-					{
-						radioNoLink.setSelected(true);
-					}
-				}
-			}
-		}
-	};
-
-	public Action radioExternalAction = new AbstractAction() {
-		public void actionPerformed(ActionEvent e)
-		{
-			radioSelectionChanged();
-			if (radioExternal.isSelected())
-			{
-				MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-				item.setHasLink(true);
-				item.setUseURL(true);
-			}
-		}
-	};
-
-	public Action radioNoLinkAction = new AbstractAction() {
-		public void actionPerformed(ActionEvent e)
-		{
-			radioSelectionChanged();
-			if (radioNoLink.isSelected())
-			{
-				MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-				item.setHasLink(false);
-			}
-		}
-	};
-
-	private String block;
-
 	private String resource;
 
-	private String path;
-
-	public EditorUI(AppletContext context, SwimInterface swim, String resource, String path, String block, URL cancel, URL commit)
+	public EditorUI(AppletContext context, SwimInterface swim, String resource, URL cancel, URL commit)
 	{
 		this.context=context;
 		this.swim=swim;
 		this.resource=resource;
-		this.path=path;
-		this.block=block;
 		cancelURL=cancel;
 		commitURL=commit;
 	}
 	
-	public void loadMenu(String menu, String version) throws Exception
+	public void loadMenu(String menu) throws Exception
 	{
 		Request request = swim.getRequest("view",menu);
-		if (version!=null)
-			request.addParameter("version","temp");
 		SAXBuilder builder = new SAXBuilder();
 		Document list = builder.build(request.encode());
-		root = new MenuItem(null,list.getRootElement());
+		root = new CategoryItem("Website");
+		mainroot = new CategoryItem("Website");
+		unused = new CategoryItem("Uncategorised Pages",true);
+		root.append(mainroot);
+		root.append(unused);
+		mainroot.parseChildren(list.getRootElement().getChild("tree"));
+		unused.parseChildren(list.getRootElement().getChild("pages"));
 		DefaultTreeModel model = new DefaultTreeModel(root);	
 		tree.setModel(model);
 		tree.setSelectionRow(0);
+		tree.setRootVisible(false);
+		tree.setShowsRootHandles(true);
+		tree.setScrollsOnExpand(false);
+		tree.putClientProperty("JTree.lineStyle", "None");
+		
+		Enumeration en = unused.children();
+		while (en.hasMoreElements())
+		{
+			PageItem page = (PageItem)en.nextElement();
+			Set set = (Set)pagecache.get(page.getPath());
+			if (set.size()>1)
+			{
+				set.remove(page);
+				model.removeNodeFromParent(page);
+			}
+		}
 	}
 	
 	public void interfaceCreated(InterfaceEvent ev)
@@ -709,78 +824,68 @@ public class EditorUI implements InterfaceListener
 				public void valueChanged(TreeSelectionEvent e)
 				{
 					TreePath path = e.getNewLeadSelectionPath();
-					boolean enabled=((path!=null)&&(path.getPathCount()>1));
-					btnAdd.setEnabled((path!=null)&&(path.getPathCount()>=1));
-					btnRename.setEnabled(enabled);
-					btnDel.setEnabled(enabled);
+					boolean enabled=((path!=null)&&(path.getPathCount()>2));
+					if (enabled&&(path.getLastPathComponent() instanceof PageItem))
+						enabled=false;
 					tree.setEditable(enabled);
-					
-					if (enabled)
+					menuRenameAction.setEnabled(enabled);
+					if (path==null)
 					{
-						MenuItem item = (MenuItem)path.getLastPathComponent();
-
-						if (item.getParent()!=null)
-						{
-							btnUp.setEnabled(item.getParent().getIndex(item)>0);
-							btnDown.setEnabled(item.getParent().getIndex(item)<(item.getParent().getChildCount()-1));
-						}
-						else
-						{
-							btnDown.setEnabled(false);
-							btnUp.setEnabled(false);
-						}
-						
-						radioInternal.setEnabled(true);
-						radioExternal.setEnabled(true);
-						radioNoLink.setEnabled(true);
-
-						textExternal.setText(item.getURL());
-						if (item.getPage()!=null)
-						{
-							textInternal.setText(item.getPage().getTitle());
-						}
-						else
-						{
-							textInternal.setText("");
-						}
-						if (item.getHasLink())
-						{
-							if (item.getUseURL())
-							{
-								radioExternal.setSelected(true);
-							}
-							else
-							{
-								radioInternal.setSelected(true);
-							}
-						}
-						else
-						{
-							radioNoLink.setSelected(true);
-						}
+						menuDeleteAction.setEnabled(false);
+						menuMoveUpAction.setEnabled(false);
+						menuMoveDownAction.setEnabled(false);
 					}
 					else
 					{
-						btnDown.setEnabled(false);
-						btnUp.setEnabled(false);
-						radioInternal.setEnabled(false);
-						radioExternal.setEnabled(false);
-						radioNoLink.setEnabled(false);
-						btnExternal.setEnabled(false);
-						btnInternal.setEnabled(false);
+						TreeNode item = (TreeNode)path.getLastPathComponent();
+						if (path.getPathCount()<=2)
+						{
+							menuDeleteAction.setEnabled(false);
+							menuMoveUpAction.setEnabled(false);
+							menuMoveDownAction.setEnabled(false);
+						}
+						else
+						{
+							menuDeleteAction.setEnabled(true);
+							TreeNode parent = item.getParent();
+							menuMoveUpAction.setEnabled(parent.getIndex(item)>0);
+							menuMoveDownAction.setEnabled((parent.getIndex(item)+1<parent.getChildCount()));
+						}
+						
+						if (item instanceof CategoryItem)
+						{
+							menuAddCategoryAction.setEnabled(true);
+						}
+						else
+						{
+							menuAddCategoryAction.setEnabled(false);
+						}
 					}
-					radioSelectionChanged();
 				}
 			});
-			// TODO fix this
-			textExternal.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e)
+			tree.addMouseListener(new MouseAdapter() {
+				public void mousePressed(MouseEvent e)
 				{
-					MenuItem item = (MenuItem)tree.getSelectionPath().getLastPathComponent();
-					item.setURL(textExternal.getText());
+					maybeShowPopup(e);
+				}
+
+				public void mouseReleased(MouseEvent e)
+				{
+					maybeShowPopup(e);
+				}
+				
+				private void maybeShowPopup(MouseEvent e)
+				{
+					if (e.isPopupTrigger())
+					{
+						TreePath target = tree.getClosestPathForLocation(e.getX(),e.getY());
+						tree.setSelectionPath(target);
+						if (target.getPathComponent(1)!=unused)
+							popup.show(e.getComponent(), e.getX(), e.getY());
+					}
 				}
 			});
-			loadMenu(resource+"/file/"+path,"temp");
+			loadMenu(resource);
 		}
 		catch (Exception e)
 		{
