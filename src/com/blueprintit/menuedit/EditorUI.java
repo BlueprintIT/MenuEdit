@@ -181,6 +181,7 @@ public class EditorUI implements InterfaceListener
 	{
 		private List children = new ArrayList();
 		private boolean sorted = false;
+		private String id;
 		
 		CategoryItem(String name)
 		{
@@ -196,6 +197,7 @@ public class EditorUI implements InterfaceListener
 		CategoryItem(Element el)
 		{
 			super(el);
+			id=el.getAttributeValue("id");
 			parseChildren(el);
 		}
 		
@@ -225,7 +227,15 @@ public class EditorUI implements InterfaceListener
 		
 		public Element getElement()
 		{
-			Element el = parent.getElement();
+			Element el = super.getElement();
+			if (id!=null)
+				el.setAttribute("id",id);
+			Iterator it = children.iterator();
+			while (it.hasNext())
+			{
+				Item item = (Item)it.next();
+				el.addContent(item.getElement());
+			}
 			return el;
 		}
 		
@@ -370,7 +380,7 @@ public class EditorUI implements InterfaceListener
 		
 		public Element getElement()
 		{
-			Element el = parent.getElement();
+			Element el = super.getElement();
 			el.setAttribute("path",path);
 			return el;
 		}
@@ -411,7 +421,7 @@ public class EditorUI implements InterfaceListener
 		
 		public Element getElement()
 		{
-			Element el = parent.getElement();
+			Element el = super.getElement();
 			el.setAttribute("path",path);
 			return el;
 		}
@@ -610,27 +620,28 @@ public class EditorUI implements InterfaceListener
 	{
 		try
 		{
-			Request request = swim.getRequest(resource);
-			request.addParameter("version","temp");
-			Writer writer = request.openWriter();
+			//Request request = swim.getRequest(resource);
+			//request.addParameter("version","temp");
+			//Writer writer = request.openWriter();
 
 			Document doc = new Document();
 			doc.setRootElement(mainroot.getElement());
 			XMLOutputter outputter = new XMLOutputter();
 			outputter.getFormat().setOmitEncoding(true);
 			outputter.getFormat().setOmitDeclaration(true);
-			outputter.output(doc,writer);
+			outputter.output(doc,System.out);
 		  
-			writer.close();
+			//writer.close();
 			return true;
 		}
 		catch (Exception ex)
 		{
-			if (ex.getMessage().startsWith("Server returned HTTP response code: 409 for URL"))
+			String message = ex.getMessage();
+			if ((message!=null)&&(message.startsWith("Server returned HTTP response code: 409 for URL")))
 			{
 				JOptionPane.showMessageDialog(null,"Another user has taken over editing of this resource, you will be unable to save your changes.","Resource Locked",JOptionPane.ERROR_MESSAGE);
 			}
-			else if (ex.getMessage().startsWith("Server returned HTTP response code: 401 for URL"))
+			else if ((message!=null)&&(message.startsWith("Server returned HTTP response code: 401 for URL")))
 			{
 				JOptionPane.showMessageDialog(null,"You are no longer logged in to the server, your session probably expired.","Authentication Required",JOptionPane.ERROR_MESSAGE);
 			}
@@ -648,8 +659,8 @@ public class EditorUI implements InterfaceListener
 	public Action commitAction = new AbstractAction("Save") {
 		public void actionPerformed(ActionEvent e)
 		{
-			if (saveWorking())
-				context.showDocument(commitURL);
+			if (saveWorking()) return;
+				//context.showDocument(commitURL);
 		}
 	};
 
