@@ -8,6 +8,7 @@ package com.blueprintit.menuedit;
 
 import java.applet.AppletContext;
 import java.awt.Point;
+import java.awt.SystemColor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
@@ -40,7 +41,9 @@ import java.util.Vector;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -617,6 +620,7 @@ public class EditorUI implements InterfaceListener
 	public JTree tree;
 	public JPopupMenu popup;
 	public JScrollPane scrollpane;
+	public JPanel banner;
 	
 	private boolean saveWorking()
 	{
@@ -828,6 +832,8 @@ public class EditorUI implements InterfaceListener
 	{
 		try
 		{
+			banner.setBackground(SystemColor.control);
+			banner.setBorder(BorderFactory.createMatteBorder(0,0,1,0,SystemColor.controlShadow));
 			tree.setRootVisible(false);
 			tree.setShowsRootHandles(true);
 			tree.setScrollsOnExpand(false);

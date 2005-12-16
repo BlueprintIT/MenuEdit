@@ -13,17 +13,20 @@
     <menuitem action="menuAddCategoryAction"/>
     <menuitem action="menuDeleteAction"/>
   </popupmenu>
-	<panel>
-		<gridbagconstraints gridx="0" gridy="0" gridwidth="1" fill="GridBagConstraints.HORIZONTAL"/>
-		<button action="cancelAction" focusable="false" toolTipText="Cancel editing and delete the working copy.">Cancel</button>
-		<button action="commitAction" focusable="false" toolTipText="Save the current edits and commit this as a new version.">Save &amp; Commit</button>
-	</panel>
-	<panel>
-	  <gridbagconstraints gridx="1" gridy="0" gridwidth="1" anchor="GridBagConstraints.LINE_END"/>
-	  <label font="Arial-BOLD-24" foreground="0000FF" text="Site Structure"/>
+  <panel id="banner" layout="GridBagLayout">
+		<gridbagconstraints gridx="0" gridy="0" gridwidth="1" weightx="1" fill="GridBagConstraints.HORIZONTAL"/>
+  	<panel>
+  		<gridbagconstraints gridx="0" gridy="0" weightx="1" gridwidth="1" anchor="GridBagConstraints.LINE_START"/>
+      <button action="commitAction" focusable="false" toolTipText="Save the current edits and commit this as a new version.">Save &amp; Commit</button>
+  		<button action="cancelAction" focusable="false" toolTipText="Cancel editing and delete the working copy.">Cancel</button>
+  	</panel>
+  	<panel>
+  	  <gridbagconstraints gridx="1" gridy="0" gridwidth="1" anchor="GridBagConstraints.LINE_END"/>
+  	  <label font="Arial-BOLD-24" foreground="0000FF" text="Site Structure"/>
+  	</panel>
 	</panel>
 	<panel layout="BorderLayout">
-		<gridbagconstraints gridx="0" gridy="1" gridwidth="2" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>
+		<gridbagconstraints gridx="0" gridy="1" gridwidth="1" weightx="1" weighty="1" fill="GridBagConstraints.BOTH"/>
 		<scrollpane id="scrollpane" constraints="BorderLayout.CENTER">
 			<tree id="tree"/>
 		</scrollpane>
