@@ -682,7 +682,11 @@ public class EditorUI implements InterfaceListener
 			Item item = (Item)tree.getSelectionPath().getLastPathComponent();
 			if ((item instanceof LinkItem)||(item instanceof CategoryItem))
 			{
-				String text = JOptionPane.showInputDialog("Enter a new name for this category:",item.toString());
+				String type = "category";
+				if (item instanceof LinkItem)
+					type="link";
+
+				String text = JOptionPane.showInputDialog("Enter a new name for this "+type+":",item.toString());
 				if (text!=null)
 				{
 					if (item instanceof CategoryItem)
@@ -696,9 +700,26 @@ public class EditorUI implements InterfaceListener
 		}
 	};
 
-	public Action menuAddCategoryAction = new AbstractAction("Add Category") {
+	public Action menuChangeLinkAction = new AbstractAction("Change Link Address...") {
 		public void actionPerformed(ActionEvent e)
 		{
+			Item item = (Item)tree.getSelectionPath().getLastPathComponent();
+			if (item instanceof LinkItem)
+			{
+				LinkItem link = (LinkItem)item;
+				String text = JOptionPane.showInputDialog("Enter a new address name for this link:",link.getPath());
+				if (text!=null)
+				{
+					link.setPath(text);
+				}
+			}
+		}
+	};
+
+	public Action menuAddCategoryAction = new AbstractAction("Add Category...") {
+		public void actionPerformed(ActionEvent e)
+		{
+			log.info("Adding a new category");
 			String text = JOptionPane.showInputDialog("Enter a name for this category:","");
 			if (text!=null)
 			{
@@ -708,6 +729,27 @@ public class EditorUI implements InterfaceListener
 				model.insertNodeInto(item,parent,parent.getChildCount());
 				tree.setSelectionPath(item.getTreePath());
 				tree.scrollPathToVisible(item.getTreePath());
+			}
+		}
+	};
+
+	public Action menuAddLinkAction = new AbstractAction("Add Link...") {
+		public void actionPerformed(ActionEvent e)
+		{
+			log.info("Adding a new link");
+			String url = JOptionPane.showInputDialog("Enter an address for this link:","");
+			if (url!=null)
+			{
+				String text = JOptionPane.showInputDialog("Enter a name for this link:","");
+				if (text!=null)
+				{
+					CategoryItem parent = (CategoryItem)tree.getSelectionPath().getLastPathComponent();
+					LinkItem item = new LinkItem(text,url);
+					DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+					model.insertNodeInto(item,parent,parent.getChildCount());
+					tree.setSelectionPath(item.getTreePath());
+					tree.scrollPathToVisible(item.getTreePath());
+				}
 			}
 		}
 	};
@@ -855,10 +897,12 @@ public class EditorUI implements InterfaceListener
 						menuDeleteAction.setEnabled(false);
 						menuMoveUpAction.setEnabled(false);
 						menuMoveDownAction.setEnabled(false);
+						menuChangeLinkAction.setEnabled(false);
 					}
 					else
 					{
 						TreeNode item = (TreeNode)path.getLastPathComponent();
+						menuChangeLinkAction.setEnabled(item instanceof LinkItem);
 						if (path.getPathCount()<=2)
 						{
 							menuDeleteAction.setEnabled(false);
@@ -876,10 +920,12 @@ public class EditorUI implements InterfaceListener
 						if (item instanceof CategoryItem)
 						{
 							menuAddCategoryAction.setEnabled(true);
+							menuAddLinkAction.setEnabled(true);
 						}
 						else
 						{
 							menuAddCategoryAction.setEnabled(false);
+							menuAddLinkAction.setEnabled(true);
 						}
 					}
 				}

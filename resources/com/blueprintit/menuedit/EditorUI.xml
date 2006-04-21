@@ -10,6 +10,8 @@
     <menuitem action="menuRenameAction"/>
     <menuitem action="menuMoveUpAction"/>
     <menuitem action="menuMoveDownAction"/>
+    <menuitem action="menuChangeLinkAction"/>
+    <menuitem action="menuAddLinkAction"/>
     <menuitem action="menuAddCategoryAction"/>
     <menuitem action="menuDeleteAction"/>
   </popupmenu>
